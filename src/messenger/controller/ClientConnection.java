@@ -6,65 +6,59 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ClientConnection extends Thread{
-
-	private Frame mainFrame; 
+	
+	private Frame mainFrame;
 	private Socket socket;
-	
-	private String message;
-	
-	private ObjectOutputStream output;
 	private ObjectInputStream input;
+	private ObjectOutputStream output;
+	
 	
 	public ClientConnection(Frame frame, Socket socket){
 		this.mainFrame = frame;
 		this.socket = socket;
 		try{
-			output = new ObjectOutputStream(socket.getOutputStream());
-			output.flush();
 			input = new ObjectInputStream(socket.getInputStream());
+			output = new ObjectOutputStream(socket.getOutputStream());
 		}catch(IOException e){
-			e.printStackTrace();
+			mainFrame.showMessage("\nERROR 1 in " + this.getClass().getName() + " - " + e.getMessage());
 		}
 	}
 	
+	@Override
 	public void run(){
-		do{
+		while(!this.isInterrupted()){
 			try{
-				message = (String) input.readObject();
-				mainFrame.showMessage(message);
-				if(mainFrame.applicationType == ApplicationType.SERVER){
-					mainFrame.serverConnection.sendMessageToClients(message);
+				String str = (String) input.readObject();
+				if(str.endsWith("- END") || str.endsWith("null")){
+					this.closeConnectionToClient();
+					this.interrupt();
 				}
+				mainFrame.serverSelf.onRecieveMessageFromClient(str);
 			}catch(IOException | ClassNotFoundException e){
-				mainFrame.showMessage("\n ERROR - " + e.getStackTrace().toString());
+				mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
 			}
-		}while(!message.endsWith("- END"));
-		closeUpSockets();
-	}
-	
-	public void sendMessageToServer(String message){
-		try {
-			output.writeObject(mainFrame.name + " - " + message);
-			this.message = message;
-			mainFrame.showMessage(message);
-		} catch (IOException e) {
-			mainFrame.showMessage("\n ERROR - " + e.getStackTrace().toString());
 		}
 	}
 	
-	public void closeUpSockets(){
+	public void sendMessageToClient(String message){
 		try{
-			if(output != null){
+			output.writeObject(message);
+			output.flush();
+		}catch(IOException e){
+			mainFrame.showMessage("\nERROR 2 in " + this.getClass().getName() + " - " + e.getMessage());
+		}
+	}
+	
+	public void closeConnectionToClient(){
+		if(input != null){
+			try{
+				input.close();
 				output.flush();
 				output.close();
-				input.close();
-			}
-			if(socket != null){
 				socket.close();
+			}catch(IOException e){
+				mainFrame.showMessage("\nERROR 3 in " + this.getClass().getName() + " - " + e.getMessage());
 			}
-		}catch(IOException e){
-			e.printStackTrace();
 		}
 	}
-
 }

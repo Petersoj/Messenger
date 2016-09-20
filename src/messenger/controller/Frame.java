@@ -5,9 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -18,14 +15,19 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 @SuppressWarnings("serial")
 public class Frame extends JFrame{
 	
+	public enum ApplicationType{
+		SERVER, CLIENT
+	}
+	
 	private JTextArea textArea;
 	public JTextField textField;
 	
-	ApplicationType applicationType;
+	public ApplicationType appType;
 	
 	private JMenuBar jMenuBar;
 	private JMenu typeJMenu;
@@ -37,8 +39,8 @@ public class Frame extends JFrame{
 	private JMenuItem portJItem;
 	private JMenuItem connectJItem;
 	
-	public ServerConnection serverConnection;
-	private ClientConnection clientConnection;
+	private ClientSelf clientSelf;
+	public ServerSelf serverSelf;
 	
 	String name;
 	int port;
@@ -46,17 +48,16 @@ public class Frame extends JFrame{
 	
 	public Frame(){
 		super("Messenger");
-		applicationType = ApplicationType.CLIENT;
+		appType = ApplicationType.CLIENT;
 		jMenuBar = new JMenuBar();
 		typeJMenu = new JMenu("Type");
 		serverJItem = new JRadioButtonMenuItem("Become a Server", false);
 		serverJItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				appType = ApplicationType.SERVER;
 				if(serverJItem.isSelected()){
 					clientJItem.setSelected(false);
-					applicationType = ApplicationType.SERVER;
-					setupApplication();
 				}else{
 					serverJItem.setSelected(true);
 				}
@@ -66,10 +67,9 @@ public class Frame extends JFrame{
 		clientJItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				appType = ApplicationType.CLIENT;
 				if(clientJItem.isSelected()){
 					serverJItem.setSelected(false);
-					applicationType = ApplicationType.CLIENT;
-					setupApplication();
 				}else{
 					clientJItem.setSelected(true);
 				}
@@ -100,7 +100,7 @@ public class Frame extends JFrame{
 				port = Integer.parseInt(JOptionPane.showInputDialog(null, "Set the Port number", "Port", 1));
 			}
 		});
-		connectJItem = new JMenuItem("Connect");
+		connectJItem = new JMenuItem("Reset and Connect");
 		connectJItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -124,26 +124,37 @@ public class Frame extends JFrame{
 		textField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String input = name + " - " + e.getActionCommand();
-				if(applicationType == ApplicationType.CLIENT){
-					clientConnection.sendMessageToServer(input);
-				}else if(applicationType == ApplicationType.SERVER){
-					showMessage(input);
-					serverConnection.clientServerMessage = name + "- END";
-					serverConnection.sendMessageToClients(input);
+				String message = "\n" + name + " - " + e.getActionCommand();
+				if(appType == ApplicationType.CLIENT){
+					clientSelf.sendMessageToServer(message);
+				}else if(appType == ApplicationType.SERVER){
+					showMessage(message);
+					serverSelf.onRecieveMessageFromClient(message);
 				}
+				textField.setText("");
 			}
 		});
 		textField.setEditable(false);
 		textArea.setEditable(false);
 		
-		port = 6666;
+		port = 2555;
 		ip = "127.0.0.1";
+		name = "DefaultName";
 		
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e){
-				// close stuff
+				if(serverSelf != null){
+					System.out.println("Close");
+					serverSelf.onRecieveMessageFromClient(name + "- END");
+					serverSelf.closeSocketsToClients();
+					serverSelf.interrupt();
+				}
+				if(clientSelf != null){
+					clientSelf.sendMessageToServer(name + "- END");
+					clientSelf.closeConnectionToServer();
+					clientSelf.interrupt();
+				}
 			}
 		});
 		
@@ -158,19 +169,31 @@ public class Frame extends JFrame{
 	}
 	
 	public void setupApplication(){
-		if(applicationType == ApplicationType.SERVER){ // SERVER
-			serverConnection = new ServerConnection(this);
-			serverConnection.start();
-		}else if(applicationType == ApplicationType.CLIENT){ // CLIENT
-			try {
-				clientConnection = new ClientConnection(this, new Socket(InetAddress.getByName(ip), port));
-			} catch (IOException e) {
-				e.printStackTrace();
-			} 
+		this.textArea.setText("");
+		this.textField.setText("");
+		if(this.serverSelf != null){
+			this.serverSelf.closeSocketsToClients();
+			this.serverSelf.interrupt();
+		}
+		if(this.clientSelf != null){
+			this.clientSelf.closeConnectionToServer();
+			this.clientSelf.interrupt();
+		}
+		if(appType == ApplicationType.CLIENT){
+			this.clientSelf = new ClientSelf(this);
+			this.clientSelf.start();
+		}else if(appType == ApplicationType.SERVER){
+			this.serverSelf = new ServerSelf(this);
+			this.serverSelf.start();
 		}
 	}
 	
 	public void showMessage(String msg){
-		textArea.append(msg);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				textArea.append(msg);
+			}
+		});
 	}
 }
