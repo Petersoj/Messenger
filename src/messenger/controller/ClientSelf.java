@@ -40,6 +40,7 @@ public class ClientSelf extends Thread{
 					this.closeConnectionToServer();
 					this.interrupt();
 				}
+				mainFrame.textArea.setCaretPosition(mainFrame.textArea.getDocument().getLength());
 			} catch (ClassNotFoundException | IOException e) {
 				mainFrame.showMessage("\nERROR 2 in " + this.getClass().getName() + " - " + e.getMessage());
 				this.interrupt();

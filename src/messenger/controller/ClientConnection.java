@@ -35,6 +35,7 @@ public class ClientConnection extends Thread{
 					this.interrupt();
 				}
 				mainFrame.serverSelf.onRecieveMessageFromClient(str);
+				mainFrame.textArea.setCaretPosition(mainFrame.textArea.getDocument().getLength());
 			}catch(IOException | ClassNotFoundException e){
 				mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
 				this.interrupt();

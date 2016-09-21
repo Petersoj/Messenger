@@ -23,8 +23,9 @@ public class Frame extends JFrame{
 		SERVER, CLIENT
 	}
 	
-	private JTextArea textArea;
+	public JTextArea textArea;
 	public JTextField textField;
+	public JScrollPane scrollPane;
 	
 	public ApplicationType appType;
 	
@@ -130,13 +131,15 @@ public class Frame extends JFrame{
 					serverSelf.onRecieveMessageFromClient(message);
 				}
 				textField.setText("");
+				textArea.setCaretPosition(textArea.getDocument().getLength());
+				textArea.getDocument().getEndPosition();
 			}
 		});
 		textField.setEditable(false);
 		textArea.setEditable(false);
 		
 		port = 2555;
-		ip = "127.0.0.1";
+		ip = "10.228.7.91";
 		name = "DefaultName";
 		
 		addWindowListener(new WindowAdapter() {
@@ -150,9 +153,10 @@ public class Frame extends JFrame{
 				}
 			}
 		});
+		scrollPane = new JScrollPane(textArea);
 		
 		add(jMenuBar, BorderLayout.NORTH);
-		add(new JScrollPane(textArea));
+		add(scrollPane);
 		add(textField, BorderLayout.SOUTH);
 		
 		setSize(500, 300);
