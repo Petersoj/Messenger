@@ -127,7 +127,6 @@ public class Frame extends JFrame{
 				if(appType == ApplicationType.CLIENT){
 					clientSelf.sendMessageToServer(message);
 				}else if(appType == ApplicationType.SERVER){
-					showMessage(message);
 					serverSelf.onRecieveMessageFromClient(message);
 				}
 				textField.setText("");
@@ -142,11 +141,11 @@ public class Frame extends JFrame{
 		
 		addWindowListener(new WindowAdapter() {
 			@Override
-			public void windowClosed(WindowEvent e){
+			public void windowClosing(WindowEvent e){
 				if(appType == ApplicationType.CLIENT){
-					clientSelf.sendMessageToServer(name + " - END");
+					clientSelf.sendMessageToServer("\n" + name + " - END");
 				}else if(appType == ApplicationType.SERVER){
-					serverSelf.onRecieveMessageFromClient(name + " - END");
+					serverSelf.onRecieveMessageFromClient("\n" + name + " - END");
 					serverSelf.closeSocketsToClients();
 				}
 			}

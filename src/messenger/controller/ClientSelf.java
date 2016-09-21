@@ -42,6 +42,7 @@ public class ClientSelf extends Thread{
 				}
 			} catch (ClassNotFoundException | IOException e) {
 				mainFrame.showMessage("\nERROR 2 in " + this.getClass().getName() + " - " + e.getMessage());
+				this.interrupt();
 			}
 		}
 	}
@@ -56,13 +57,15 @@ public class ClientSelf extends Thread{
 	}
 	
 	public void closeConnectionToServer(){
-		try{
-			input.close();
-			output.flush();
-			output.close();
-			socket.close();
-		}catch(IOException e){
-			mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
+		if(socket != null){
+			try{
+				input.close();
+				output.flush();
+				output.close();
+				socket.close();
+			}catch(IOException e){
+				mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
+			}
 		}
 	}
 	

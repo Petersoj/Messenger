@@ -21,6 +21,7 @@ public class ServerSelf extends Thread{
 			mainFrame.showMessage("\nStarted listeneing on port: " + mainFrame.port);
 		} catch (IOException e) {
 			mainFrame.showMessage("\nERROR 2 in " + this.getClass().getName() + " - " + e.getMessage());
+			this.interrupt();
 		}
 	}
 	
