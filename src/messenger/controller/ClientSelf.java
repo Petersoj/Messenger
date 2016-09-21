@@ -26,20 +26,19 @@ public class ClientSelf extends Thread{
 			mainFrame.textField.setEditable(true);
 		} catch (IOException e) {
 			mainFrame.showMessage("\nERROR 1 in " + this.getClass().getName() + " - " + e.getMessage());
+			this.interrupt();
 		}
 	}
 	
 	@Override
 	public void run(){
-		while(!this.isInterrupted()){
+		while(!this.isInterrupted() && socket != null){
 			try {
-				if(input != null){
-					String message = (String) input.readObject();
-					mainFrame.showMessage(message);
-					if(message.equals(mainFrame.getName() + " - END")){
-						this.closeConnectionToServer();
-						this.interrupt();
-					}
+				String message = (String) input.readObject();
+				mainFrame.showMessage(message);
+				if(message.equals(mainFrame.getName() + " - END")){
+					this.closeConnectionToServer();
+					this.interrupt();
 				}
 			} catch (ClassNotFoundException | IOException e) {
 				mainFrame.showMessage("\nERROR 2 in " + this.getClass().getName() + " - " + e.getMessage());
@@ -57,15 +56,13 @@ public class ClientSelf extends Thread{
 	}
 	
 	public void closeConnectionToServer(){
-		if(input != null){
-			try{
-				input.close();
-				output.flush();
-				output.close();
-				socket.close();
-			}catch(IOException e){
-				mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
-			}
+		try{
+			input.close();
+			output.flush();
+			output.close();
+			socket.close();
+		}catch(IOException e){
+			mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
 		}
 	}
 	

@@ -15,7 +15,6 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 @SuppressWarnings("serial")
 public class Frame extends JFrame{
@@ -144,16 +143,11 @@ public class Frame extends JFrame{
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e){
-				if(serverSelf != null){
-					System.out.println("Close");
-					serverSelf.onRecieveMessageFromClient(name + "- END");
+				if(appType == ApplicationType.CLIENT){
+					clientSelf.sendMessageToServer(name + " - END");
+				}else if(appType == ApplicationType.SERVER){
+					serverSelf.onRecieveMessageFromClient(name + " - END");
 					serverSelf.closeSocketsToClients();
-					serverSelf.interrupt();
-				}
-				if(clientSelf != null){
-					clientSelf.sendMessageToServer(name + "- END");
-					clientSelf.closeConnectionToServer();
-					clientSelf.interrupt();
 				}
 			}
 		});
@@ -171,13 +165,12 @@ public class Frame extends JFrame{
 	public void setupApplication(){
 		this.textArea.setText("");
 		this.textField.setText("");
-		if(this.serverSelf != null){
-			this.serverSelf.closeSocketsToClients();
-			this.serverSelf.interrupt();
-		}
-		if(this.clientSelf != null){
-			this.clientSelf.closeConnectionToServer();
-			this.clientSelf.interrupt();
+		if(clientSelf != null){
+			clientSelf.interrupt();
+			clientSelf.closeConnectionToServer();
+		}else if(serverSelf != null){
+			serverSelf.interrupt();
+			serverSelf.closeSocketsToClients();
 		}
 		if(appType == ApplicationType.CLIENT){
 			this.clientSelf = new ClientSelf(this);
@@ -189,11 +182,6 @@ public class Frame extends JFrame{
 	}
 	
 	public void showMessage(String msg){
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				textArea.append(msg);
-			}
-		});
+		textArea.append(msg);
 	}
 }

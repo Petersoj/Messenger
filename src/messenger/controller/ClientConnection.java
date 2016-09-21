@@ -8,7 +8,7 @@ import java.net.Socket;
 public class ClientConnection extends Thread{
 	
 	private Frame mainFrame;
-	private Socket socket;
+	public Socket socket;
 	private ObjectInputStream input;
 	private ObjectOutputStream output;
 	
@@ -21,6 +21,7 @@ public class ClientConnection extends Thread{
 			output = new ObjectOutputStream(socket.getOutputStream());
 		}catch(IOException e){
 			mainFrame.showMessage("\nERROR 1 in " + this.getClass().getName() + " - " + e.getMessage());
+			this.interrupt();
 		}
 	}
 	
@@ -29,13 +30,14 @@ public class ClientConnection extends Thread{
 		while(!this.isInterrupted()){
 			try{
 				String str = (String) input.readObject();
-				if(str.endsWith("- END") || str.endsWith("null")){
+				if(str.endsWith("- END")){
 					this.closeConnectionToClient();
 					this.interrupt();
 				}
 				mainFrame.serverSelf.onRecieveMessageFromClient(str);
 			}catch(IOException | ClassNotFoundException e){
 				mainFrame.showMessage("\nERROR 4 in " + this.getClass().getName() + " - " + e.getMessage());
+				this.interrupt();
 			}
 		}
 	}

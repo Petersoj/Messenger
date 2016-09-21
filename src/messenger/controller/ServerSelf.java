@@ -31,6 +31,7 @@ public class ServerSelf extends Thread{
 				Socket socket = serverSocket.accept();
 				mainFrame.showMessage("\nAccepted Connection on " + socket.getInetAddress().getHostName() + " on  port " + mainFrame.port);
 				ClientConnection client = new ClientConnection(mainFrame, socket);
+				clients.add(client);
 				client.start();
 				mainFrame.textField.setEditable(true);
 			} catch (IOException e) {
@@ -41,16 +42,17 @@ public class ServerSelf extends Thread{
 	
 	public void onRecieveMessageFromClient(String message){
 		for(ClientConnection client : clients){
-			System.out.println("Message");
 			client.sendMessageToClient(message);
 		}
+		mainFrame.showMessage(message);
 	}
 	
 	public void closeSocketsToClients(){
 		for(ClientConnection client : clients){
-			client.closeConnectionToClient();
 			client.interrupt();
+			client.closeConnectionToClient();
 		}
+		clients.clear();
 	}
 
 }
